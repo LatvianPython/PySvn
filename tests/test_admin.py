@@ -1,4 +1,4 @@
-__author__ = 'dsoprea'
+__author__ = "dsoprea"
 
 import unittest
 import tempfile
@@ -35,7 +35,7 @@ class TestAdmin(unittest.TestCase):
             a.create(temp_path)
 
             # Do a read.
-            rc = svn.remote.RemoteClient('file://' + temp_path)
+            rc = svn.remote.RemoteClient("file:///" + temp_path)
             info = rc.info()
             _LOGGER.debug("Info from new repository: [%s]", str(info))
         finally:
@@ -43,4 +43,3 @@ class TestAdmin(unittest.TestCase):
                 shutil.rmtree(temp_path)
             except:
                 pass
-
