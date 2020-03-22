@@ -1,10 +1,9 @@
-import collections
 import logging
 import os
 import xml.etree.ElementTree
-from typing import Iterable, NamedTuple, Any, Optional, List, Union
-
 from datetime import datetime
+from typing import Iterable, NamedTuple, Optional, List, Union, MutableMapping
+
 import dateutil.parser
 
 import svn.common_base
@@ -45,20 +44,16 @@ LogEntry = NamedTuple(
 class CommonClient(svn.common_base.CommonBase):
     def __init__(
         self,
-        url_or_path,
-        type_,
-        username=None,
-        password=None,
+        url_or_path: str,
+        type_: str,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         svn_filepath="svn",
-        trust_cert=None,
-        env=None,
-        *args,
-        **kwargs
+        trust_cert: Optional[bool] = None,
+        env: Optional[MutableMapping] = None,
     ):
         if env is None:
             env = {}
-
-        super(CommonClient, self).__init__(*args, **kwargs)
 
         self.__url_or_path = url_or_path
         self.__username = username
