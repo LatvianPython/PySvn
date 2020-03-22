@@ -29,16 +29,6 @@ setuptools.setup(
     package_data={
         "svn": [
             "py.typed",
-            "utility.pyi",
-            "local.pyi",
-            "remote.pyi",
-            "common_base.pyi",
-            "exception.pyi",
-            "config.pyi",
-            "constants.pyi",
-            "test_support.pyi",
-            "common.pyi",
-            "admin.pyi",
             "resources/README.md",
             "resources/requirements.txt",
             "resources/requirements-testing.txt",

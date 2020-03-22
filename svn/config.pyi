@@ -1,4 +1,0 @@
-from typing import Any
-
-DEFAULT_CONSOLE_ENCODING: str
-CONSOLE_ENCODING: Any
