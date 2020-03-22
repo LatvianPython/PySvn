@@ -1,6 +1,7 @@
 import os
 import subprocess
 import logging
+from typing import Union, List
 
 import svn.config
 import svn.exception
@@ -15,10 +16,13 @@ class CommonBase:
         success_code=0,
         do_combine=False,
         return_binary=False,
-        environment={},
+        environment=None,
         wd=None,
         do_discard_stderr=True,
-    ):
+    ) -> Union[List[str], bytes]:
+        if environment is None:
+            environment = {}
+
         _LOGGER.debug("RUN: %s" % (cmd,))
 
         env = os.environ.copy()
@@ -61,7 +65,7 @@ class CommonBase:
             )
 
         if return_binary is True or do_combine is True:
-            return stdout
+            return bytes(stdout)
 
         return stdout.strip("\n").split("\n")
 

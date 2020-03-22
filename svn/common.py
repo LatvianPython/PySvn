@@ -26,17 +26,17 @@ ChangeSet = NamedTuple(
         ("modified_text", bool),
         ("kind", str),
         ("action", str),
-        ("path", str),
+        ("path", Optional[str]),
     ],
 )
 
 LogEntry = NamedTuple(
     "LogEntry",
     [
-        ("date", datetime),
-        ("msg", str),
-        ("revision", int),
-        ("author", str),
+        ("date", Optional[datetime]),
+        ("msg", Optional[str]),
+        ("revision", Optional[int]),
+        ("author", Optional[str]),
         ("changelist", Optional[List[ChangeSet]]),
     ],
 )
@@ -51,10 +51,13 @@ class CommonClient(svn.common_base.CommonBase):
         password=None,
         svn_filepath="svn",
         trust_cert=None,
-        env={},
+        env=None,
         *args,
         **kwargs
     ):
+        if env is None:
+            env = {}
+
         super(CommonClient, self).__init__(*args, **kwargs)
 
         self.__url_or_path = url_or_path
@@ -69,7 +72,9 @@ class CommonClient(svn.common_base.CommonBase):
 
         self.__type = type_
 
-    def run_command(self, subcommand, args, **kwargs):
+    def run_command(
+        self, subcommand: str, args: List[str], **kwargs
+    ) -> Union[List[str], bytes]:
         cmd = [self.__svn_filepath, "--non-interactive"]
 
         if self.__trust_cert:
@@ -83,7 +88,8 @@ class CommonClient(svn.common_base.CommonBase):
         cmd += [subcommand] + args
         return self.external_command(cmd, environment=self.__env, **kwargs)
 
-    def __element_text(self, element):
+    @staticmethod
+    def __element_text(element: xml.etree.ElementTree) -> Optional[str]:
         """Return ElementTree text or None
         :param xml.etree.ElementTree element: ElementTree to get text.
 
@@ -183,7 +189,7 @@ class CommonClient(svn.common_base.CommonBase):
 
         for property_name in property_names:
             result = self.run_command(
-                "propget", ["--xml", property_name, full_url_or_path,], do_combine=True
+                "propget", ["--xml", property_name, full_url_or_path], do_combine=True
             )
             root = xml.etree.ElementTree.fromstring(result)
             target_elem = root.find("target")
@@ -192,7 +198,7 @@ class CommonClient(svn.common_base.CommonBase):
 
         return property_dict
 
-    def cat(self, rel_filepath, revision=None):
+    def cat(self, rel_filepath: str, revision: Optional[int] = None) -> bytes:
         cmd = []
         if revision is not None:
             cmd += ["-r", str(revision)]
@@ -201,15 +207,15 @@ class CommonClient(svn.common_base.CommonBase):
 
     def log_default(
         self,
-        timestamp_from_dt=None,
-        timestamp_to_dt=None,
-        limit=None,
-        rel_filepath=None,
-        stop_on_copy=False,
-        revision_from=None,
-        revision_to=None,
-        changelist=False,
-        use_merge_history=False,
+        timestamp_from_dt: Optional[datetime] = None,
+        timestamp_to_dt: Optional[datetime] = None,
+        limit: Optional[int] = None,
+        rel_filepath: Optional[str] = None,
+        stop_on_copy: bool = False,
+        revision_from: Optional[int] = None,
+        revision_to: Optional[int] = None,
+        changelist: bool = False,
+        use_merge_history: bool = False,
     ) -> Iterable[LogEntry]:
         """Allow for the most-likely kind of log listing: the complete list,
         a FROM and TO timestamp, a FROM timestamp only, or a quantity limit.
@@ -248,13 +254,7 @@ class CommonClient(svn.common_base.CommonBase):
                     "timestamp and revision number ranges."
                 )
 
-            if not revision_from:
-                revision_from = "1"
-
-            if not revision_to:
-                revision_to = "HEAD"
-
-            args += ["-r", str(revision_from) + ":" + str(revision_to)]
+            args += ["-r", str(revision_from or "1") + ":" + str(revision_to or "HEAD")]
 
         if limit is not None:
             args += ["-l", str(limit)]
@@ -283,15 +283,12 @@ class CommonClient(svn.common_base.CommonBase):
             if date_text is not None:
                 date = dateutil.parser.parse(date_text)
 
-            log_entry = {
-                "msg": entry_info.get("msg"),
-                "author": entry_info.get("author"),
-                "revision": int(e.get("revision")),
-                "date": date,
-            }
-
-            if changelist is True:
-                log_entry["changelist"] = [
+            yield LogEntry(
+                date,
+                entry_info.get("msg"),
+                int(e.get("revision") or ""),
+                entry_info.get("author"),
+                [
                     ChangeSet(
                         ch.attrib["prop-mods"] == "true",
                         ch.attrib["text-mods"] == "true",
@@ -301,10 +298,9 @@ class CommonClient(svn.common_base.CommonBase):
                     )
                     for ch in e.findall("paths/path")
                 ]
-            else:
-                log_entry["changelist"] = None
-
-            yield LogEntry(**log_entry)
+                if changelist
+                else None,
+            )
 
     def export(self, to_path, revision=None, force=False):
         cmd = []
