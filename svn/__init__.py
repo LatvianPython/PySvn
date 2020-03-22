@@ -1,4 +1,6 @@
 from .admin import Admin
+from .common import LogEntry
+from .common import ChangeSet
 from .exception import SvnException
 from .local import LocalClient
 from .remote import RemoteClient

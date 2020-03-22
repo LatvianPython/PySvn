@@ -1,14 +1,15 @@
 import collections
 import logging
 import os
-import subprocess
 import xml.etree.ElementTree
+from typing import Iterable, NamedTuple, Any, Optional, List
 
+from datetime import datetime
 import dateutil.parser
 
+import svn.common_base
 import svn.constants
 import svn.exception
-import svn.common_base
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,6 +18,28 @@ _FILE_HUNK_PREFIX = "Index: "
 _HUNK_HEADER_LEFT_PREFIX = "--- "
 _HUNK_HEADER_RIGHT_PREFIX = "+++ "
 _HUNK_HEADER_LINE_NUMBERS_PREFIX = "@@ "
+
+ChangeSet = NamedTuple(
+    "ChangeSet",
+    [
+        ("modified_properties", bool),
+        ("modified_text", bool),
+        ("kind", str),
+        ("action", str),
+        ("path", str),
+    ],
+)
+
+LogEntry = NamedTuple(
+    "LogEntry",
+    [
+        ("date", datetime),
+        ("msg", str),
+        ("revision", int),
+        ("author", str),
+        ("changelist", Optional[List[ChangeSet]]),
+    ],
+)
 
 
 class CommonClient(svn.common_base.CommonBase):
@@ -187,7 +210,7 @@ class CommonClient(svn.common_base.CommonBase):
         revision_to=None,
         changelist=False,
         use_merge_history=False,
-    ):
+    ) -> Iterable[LogEntry]:
         """Allow for the most-likely kind of log listing: the complete list,
         a FROM and TO timestamp, a FROM timestamp only, or a quantity limit.
         """
@@ -250,8 +273,6 @@ class CommonClient(svn.common_base.CommonBase):
         )
 
         root = xml.etree.ElementTree.fromstring(result)
-        named_fields = ["date", "msg", "revision", "author", "changelist"]
-        c = collections.namedtuple("LogEntry", named_fields)
 
         # Merge history can create nested log entries, so use iter instead of findall
         for e in root.iter("logentry"):
@@ -270,15 +291,20 @@ class CommonClient(svn.common_base.CommonBase):
             }
 
             if changelist is True:
-                cl = []
-                for ch in e.findall("paths/path"):
-                    cl.append((ch.attrib["action"], ch.text))
-
-                log_entry["changelist"] = cl
+                log_entry["changelist"] = [
+                    ChangeSet(
+                        ch.attrib["prop-mods"] == "true",
+                        ch.attrib["text-mods"] == "true",
+                        ch.attrib["kind"],
+                        ch.attrib["action"],
+                        ch.text,
+                    )
+                    for ch in e.findall("paths/path")
+                ]
             else:
                 log_entry["changelist"] = None
 
-            yield c(**log_entry)
+            yield LogEntry(**log_entry)
 
     def export(self, to_path, revision=None, force=False):
         cmd = []

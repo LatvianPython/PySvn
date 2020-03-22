@@ -151,7 +151,9 @@ class TestCommonClient(unittest.TestCase):
         with svn.test_support.temp_common() as (_, _, cc):
             svn.test_support.populate_bigger_file_changes1()
 
-            history = cc.log_default()
+            cc: svn.common.CommonClient = cc
+
+            history = cc.log_default(changelist=True)
             history = list(history)
 
             self.assertEqual(len(history), 1)
@@ -160,6 +162,7 @@ class TestCommonClient(unittest.TestCase):
 
             self.assertEqual(log.revision, 1)
             self.assertEqual(log.msg, "Initial commit.")
+            self.assertEqual(len(log.changelist), 4)
 
     def test_cat(self):
         with svn.test_support.temp_common() as (_, _, cc):
