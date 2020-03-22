@@ -25,7 +25,7 @@ ChangeSet = NamedTuple(
         ("modified_text", bool),
         ("kind", str),
         ("action", str),
-        ("path", Optional[str]),
+        ("path", str),
     ],
 )
 
@@ -34,9 +34,9 @@ LogEntry = NamedTuple(
     [
         ("date", Optional[datetime]),
         ("msg", Optional[str]),
-        ("revision", Optional[int]),
+        ("revision", int),
         ("author", Optional[str]),
-        ("changelist", Optional[List[ChangeSet]]),
+        ("changelist", List[ChangeSet]),
     ],
 )
 
@@ -281,7 +281,7 @@ class CommonClient(svn.common_base.CommonBase):
             yield LogEntry(
                 date,
                 entry_info.get("msg"),
-                int(e.get("revision") or ""),
+                int(e.get("revision") or -1),
                 entry_info.get("author"),
                 [
                     ChangeSet(
@@ -289,12 +289,10 @@ class CommonClient(svn.common_base.CommonBase):
                         ch.attrib["text-mods"] == "true",
                         ch.attrib["kind"],
                         ch.attrib["action"],
-                        ch.text,
+                        ch.text or "",
                     )
                     for ch in e.findall("paths/path")
-                ]
-                if changelist
-                else None,
+                ],
             )
 
     def export(self, to_path, revision=None, force=False):
