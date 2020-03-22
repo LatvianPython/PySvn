@@ -19,7 +19,7 @@ class CommonBase:
         environment=None,
         wd=None,
         do_discard_stderr=True,
-    ) -> Union[List[str], bytes]:
+    ) -> Union[List[str], str, bytes]:
         if environment is None:
             environment = {}
 
@@ -64,8 +64,8 @@ class CommonBase:
                 )
             )
 
-        if return_binary is True or do_combine is True:
-            return bytes(stdout)
+        if return_binary or do_combine:
+            return stdout
 
         return stdout.strip("\n").split("\n")
 

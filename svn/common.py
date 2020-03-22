@@ -2,7 +2,7 @@ import collections
 import logging
 import os
 import xml.etree.ElementTree
-from typing import Iterable, NamedTuple, Any, Optional, List
+from typing import Iterable, NamedTuple, Any, Optional, List, Union
 
 from datetime import datetime
 import dateutil.parser
