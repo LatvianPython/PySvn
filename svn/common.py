@@ -199,7 +199,7 @@ class CommonClient(svn.common_base.CommonBase):
         cmd = []
         if revision is not None:
             cmd += ["-r", str(revision)]
-        cmd += [self.__url_or_path + "/" + rel_filepath]
+        cmd += [self.__url_or_path + "/" + rel_filepath.replace("\\", "/")]
         return self.run_command("cat", cmd, return_binary=True)
 
     def log_default(
