@@ -95,7 +95,9 @@ class CommonClient(svn.common_base.CommonBase):
 
         return None
 
-    def info(self, rel_path=None, revision=None):
+    def info(
+        self, rel_path: Optional[str] = None, revision: Optional[int] = None
+    ) -> MutableMapping:
         cmd = []
         if revision is not None:
             cmd += ["-r", str(revision)]
