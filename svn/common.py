@@ -213,6 +213,7 @@ class CommonClient(svn.common_base.CommonBase):
         revision_to: Optional[int] = None,
         changelist: bool = False,
         use_merge_history: bool = False,
+        search: Optional[str] = None,
     ) -> Iterable[LogEntry]:
         """Allow for the most-likely kind of log listing: the complete list,
         a FROM and TO timestamp, a FROM timestamp only, or a quantity limit.
@@ -264,6 +265,9 @@ class CommonClient(svn.common_base.CommonBase):
 
         if changelist is True:
             args += ["--verbose"]
+
+        if search:
+            args += ["--search", search]
 
         result = self.run_command(
             "log", args + ["--xml", full_url_or_path], do_combine=True
